@@ -9,6 +9,7 @@ const socket = io('http://localhost:4000');
 const Chat: React.FC = () => {
   const [message, setMessage] = useState(''); // Текущее сообщение
   const [messages, setMessages] = useState<string[]>([]); // История сообщений
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   const chatEndRef = useRef<HTMLDivElement | null>(null); // Для прокрутки к последнему сообщению
 
@@ -41,7 +42,7 @@ const Chat: React.FC = () => {
 
   return (
     <>
-      <Navbar title="Chat" />
+      <Navbar title="Chat" setIsAuthenticated={setIsAuthenticated} />
       <Container
         maxWidth="sm"
         style={{

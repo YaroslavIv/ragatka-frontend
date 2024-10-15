@@ -6,6 +6,7 @@ import Navbar from '../components/Navbar'; // Импортируем Navbar
 
 const Upload: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   // Обработчик для drag-and-drop
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -45,7 +46,7 @@ const Upload: React.FC = () => {
 
   return (
     <>
-      <Navbar title="Upload" />
+      <Navbar title="Upload" setIsAuthenticated={setIsAuthenticated} />
 
       <Container maxWidth="sm" style={{ paddingTop: '100px' }}>
         {/* Drag-and-Drop зона */}

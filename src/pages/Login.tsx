@@ -3,7 +3,11 @@ import { TextField, Button, Container } from '@mui/material';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const Login: React.FC = () => {
+interface LoginProps {
+  setIsAuthenticated: (authStatus: boolean) => void;
+}
+
+const Login: React.FC<LoginProps> = ({ setIsAuthenticated }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -14,14 +18,15 @@ const Login: React.FC = () => {
     setError(null);
 
     try {
-      const response = await axios.post('http://localhost:5002/api/login', {
+      const response = await axios.post('http://localhost:5000/api/login', {
         email,
         password,
       });
 
       if (response.status === 200) {
-        // Успешный вход, перенаправляем на страницу чата
-        navigate('/chat');
+        localStorage.setItem('authToken', 'valid-token'); // Сохраняем "токен" в localStorage
+        setIsAuthenticated(true); // Устанавливаем статус авторизации
+        navigate('/chat'); // Перенаправляем на страницу чата после успешного входа
       }
     } catch (err: any) {
       if (err.response && err.response.data) {
@@ -50,6 +55,9 @@ const Login: React.FC = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+        {error && (
+          <p style={{ color: 'red' }}>{error}</p>
+        )}
         <Button type="submit" variant="contained" color="primary" fullWidth>
           Login
         </Button>

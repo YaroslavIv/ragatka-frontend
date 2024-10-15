@@ -10,8 +10,8 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ isAuthenticated, childr
   if (!isAuthenticated) {
     return <Navigate to="/" />; // Перенаправление на страницу логина, если не авторизован
   }
-  
-  return <>{children}</>; // Если авторизован, отображаем компонент
+
+  return <>{children}</>; // Если авторизован, рендерим компонент
 };
 
 export default ProtectedRoute;
