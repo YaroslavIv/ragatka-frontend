@@ -1,6 +1,9 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, IconButton } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
+import ExitToAppIcon from '@mui/icons-material/ExitToApp';
+import CloudUploadIcon from '@mui/icons-material/CloudUpload';
+import ChatIcon from '@mui/icons-material/Chat';
 
 interface NavbarProps {
   title: string;
@@ -11,26 +14,26 @@ const Navbar: React.FC<NavbarProps> = ({ title, setIsAuthenticated }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('authToken'); // Удаляем токен из localStorage
-    setIsAuthenticated(false); // Обновляем состояние аутентификации
-    navigate('/'); // Перенаправляем на страницу логина
+    localStorage.removeItem('authToken');
+    setIsAuthenticated(false);
+    navigate('/');
   };
 
   return (
-    <AppBar position="fixed">
+    <AppBar position="fixed" color="primary">
       <Toolbar>
         <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
           {title}
         </Typography>
-        <Button color="inherit" component={Link} to="/upload">
+        <Button color="inherit" startIcon={<CloudUploadIcon />} component={Link} to="/upload">
           Upload
         </Button>
-        <Button color="inherit" component={Link} to="/chat">
+        <Button color="inherit" startIcon={<ChatIcon />} component={Link} to="/chat">
           Chat
         </Button>
-        <Button color="inherit" onClick={handleLogout}>
-          Logout
-        </Button>
+        <IconButton color="inherit" onClick={handleLogout}>
+          <ExitToAppIcon />
+        </IconButton>
       </Toolbar>
     </AppBar>
   );

@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Button, Container } from '@mui/material';
-import axios from 'axios';
+import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
 interface LoginProps {
@@ -16,30 +15,25 @@ const Login: React.FC<LoginProps> = ({ setIsAuthenticated }) => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
-    try {
-      const response = await axios.post('http://localhost:5000/api/login', {
-        email,
-        password,
-      });
-
-      if (response.status === 200) {
-        localStorage.setItem('authToken', 'valid-token'); // Сохраняем "токен" в localStorage
-        setIsAuthenticated(true); // Устанавливаем статус авторизации
-        navigate('/chat'); // Перенаправляем на страницу чата после успешного входа
-      }
-    } catch (err: any) {
-      if (err.response && err.response.data) {
-        setError(err.response.data.error); // Отображаем сообщение об ошибке
-      } else {
-        setError('An error occurred. Please try again.');
-      }
-    }
+    localStorage.setItem('authToken', 'valid-token');
+    setIsAuthenticated(true);
+    navigate('/chat');
   };
 
   return (
     <Container maxWidth="sm">
-      <form onSubmit={handleLogin}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          height: '100vh',
+          textAlign: 'center',
+        }}
+      >
+        <Typography variant="h4" gutterBottom>
+          Вход
+        </Typography>
         <TextField
           label="Email"
           fullWidth
@@ -55,13 +49,11 @@ const Login: React.FC<LoginProps> = ({ setIsAuthenticated }) => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
-        {error && (
-          <p style={{ color: 'red' }}>{error}</p>
-        )}
-        <Button type="submit" variant="contained" color="primary" fullWidth>
+        {error && <Typography color="error">{error}</Typography>}
+        <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }} onClick={handleLogin}>
           Login
         </Button>
-      </form>
+      </Box>
     </Container>
   );
 };
