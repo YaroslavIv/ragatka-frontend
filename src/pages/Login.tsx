@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 interface LoginProps {
   setIsAuthenticated: (authStatus: boolean) => void;
@@ -13,11 +14,27 @@ const Login: React.FC<LoginProps> = ({ setIsAuthenticated }) => {
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    localStorage.setItem('authToken', 'valid-token');
-    setIsAuthenticated(true);
-    navigate('/chat');
+    e.preventDefault(); // Предотвращаем перезагрузку страницы
+    setError(null); // Сбрасываем ошибки
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/login', {
+        email,
+        password,
+      });
+
+      if (response.data.token) {
+        localStorage.setItem('authToken', response.data.token); // Сохраняем токен в localStorage
+        setIsAuthenticated(true); // Устанавливаем статус авторизации
+        navigate('/chat'); // Перенаправляем в чат после успешного входа
+      }
+    } catch (err: any) {
+      if (err.response && err.response.data) {
+        setError(err.response.data.message); // Отображаем сообщение об ошибке, если оно есть
+      } else {
+        setError('An error occurred. Please try again.');
+      }
+    }
   };
 
   return (

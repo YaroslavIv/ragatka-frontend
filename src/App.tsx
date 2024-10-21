@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme, CssBaseline } from '@mui/material';
 import Chat from './pages/Chat';
 import Upload from './pages/Upload';
 import Login from './pages/Login';
+import Account from './pages/Account'; 
 import ProtectedRoute from './components/ProtectedRoute';
 
 const theme = createTheme({
@@ -33,38 +34,44 @@ const theme = createTheme({
 const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
+  // Проверка аутентификации при загрузке
   useEffect(() => {
-    const token = localStorage.getItem('authToken');
+    const token = localStorage.getItem('authToken'); // Проверяем, есть ли токен
     if (token) {
       setIsAuthenticated(true);
     }
   }, []);
 
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <Router>
-        <Routes>
-          <Route path="/" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
-          <Route
-            path="/chat"
-            element={
-              <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <Chat />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/upload"
-            element={
-              <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <Upload />
-              </ProtectedRoute>
-            }
-          />
-        </Routes>
-      </Router>
-    </ThemeProvider>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+        <Route
+          path="/chat"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Chat />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/upload"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Upload />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/account"
+          element={
+            <ProtectedRoute isAuthenticated={isAuthenticated}>
+              <Account setIsAuthenticated={setIsAuthenticated} />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </Router>
   );
 };
 

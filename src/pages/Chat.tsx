@@ -2,32 +2,63 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Button, TextField, Container, ListItem, ListItemText, Box, Typography } from '@mui/material';
 import Navbar from '../components/Navbar';
 import io from 'socket.io-client';
-
-// Подключаем WebSocket (замени URL на свой сервер)
-const socket = io('http://localhost:4000');
+import { useNavigate } from 'react-router-dom';
 
 interface Message {
   text: string;
   sender: 'client' | 'server'; // Индикатор отправителя (клиент или сервер)
 }
 
+// Извлечение токена из localStorage
+const token = localStorage.getItem('authToken');
+
+// Подключаем WebSocket с передачей токена к порту 5000
+const socket = io('http://localhost:4000', {
+  query: {
+    token: token ? `Bearer ${token}` : '' // Передаем токен при подключении
+  }
+});
+
 const Chat: React.FC = () => {
   const [message, setMessage] = useState(''); // Текущее сообщение
   const [messages, setMessages] = useState<Message[]>([]); // История сообщений с указанием отправителя
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null); // Для обработки ошибок
+  const navigate = useNavigate();
 
   const chatEndRef = useRef<HTMLDivElement | null>(null); // Для прокрутки к последнему сообщению
 
   // Обработка получения нового сообщения от сервера
   useEffect(() => {
-    socket.on('message', (msg: string) => {
-      setMessages((prevMessages) => [...prevMessages, { text: msg, sender: 'server' }]);
+    socket.on('connect', () => {
+      console.log('WebSocket connected');
     });
-
+  
+    socket.on('message', (msg: any) => {
+      // Проверяем, является ли сообщение строкой или объектом
+      if (typeof msg === 'string') {
+        // Сообщение как строка
+        setMessages((prevMessages) => [...prevMessages, { text: msg, sender: 'server' }]);
+      } else if (msg.error) {
+        // Обработка ошибки
+        setError(msg.error);
+      }
+    });
+  
+    socket.on('error', (err: string) => {
+      console.error('Socket error:', err);
+      setError('Ошибка подключения. Пожалуйста, войдите заново.');
+      localStorage.removeItem('authToken');
+      setIsAuthenticated(false);
+      navigate('/'); // Перенаправляем на страницу логина
+    });
+  
     return () => {
-      socket.off('message'); // Отключаем обработчик при размонтировании компонента
+      socket.off('message');
+      socket.off('error'); // Отключаем обработчики при размонтировании компонента
     };
-  }, []);
+  }, [navigate]);
+  
 
   // Прокрутка к последнему сообщению при добавлении нового сообщения
   useEffect(() => {
@@ -38,12 +69,17 @@ const Chat: React.FC = () => {
 
   // Отправка сообщения на сервер
   const handleSend = () => {
+    // Извлекаем токен перед отправкой сообщения
+    const token = localStorage.getItem('authToken');
+    
     if (message.trim()) {
-      socket.emit('message', message); // Отправляем сообщение на сервер
-      setMessages((prevMessages) => [...prevMessages, { text: message, sender: 'client' }]); // Добавляем сообщение в историю локально
-      setMessage(''); // Очищаем поле ввода
+      // Отправляем сообщение и токен
+      socket.emit('message', { text: message, token });
+      setMessages((prevMessages) => [...prevMessages, { text: message, sender: 'client' }]);
+      setMessage('');
     }
   };
+  
 
   // Обработка нажатия клавиши Enter
   const handleKeyPress = (e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -175,7 +211,7 @@ const Chat: React.FC = () => {
           </Button>
         </Box>
       </Container>
-    </> 
+    </>
   );
 };
 

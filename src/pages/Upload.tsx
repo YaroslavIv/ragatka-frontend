@@ -1,12 +1,15 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Button, Container, Box } from '@mui/material';
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar'; // Импортируем Navbar
 
 const Upload: React.FC = () => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null); // Для обработки ошибок
+  const navigate = useNavigate(); // Для перенаправления в случае недействительного токена
 
   // Обработчик для drag-and-drop
   const onDrop = useCallback((acceptedFiles: File[]) => {
@@ -25,17 +28,36 @@ const Upload: React.FC = () => {
 
   // Отправка файлов на сервер
   const handleUpload = async () => {
+    const token = localStorage.getItem('authToken'); // Получаем токен из localStorage
+    if (!token) {
+      setError('Token is missing, please log in.');
+      return;
+    }
+
     const formData = new FormData();
     selectedFiles.forEach((file) => {
       formData.append('files', file);
     });
 
     try {
-      await axios.post('http://localhost:5000/api/upload', formData);
+      await axios.post('http://localhost:5001/api/upload', formData, {
+        headers: {
+          Authorization: `Bearer ${token}`, // Передаем токен в заголовке
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       alert('Files uploaded successfully');
       setSelectedFiles([]); // Очищаем список файлов после успешной загрузки
-    } catch (error) {
-      console.error('Error uploading files:', error);
+    } catch (err) {
+      const axiosError = err as AxiosError;
+      console.error('Error uploading files:', axiosError);
+      setError('Ошибка при загрузке файлов.');
+      if (axiosError.response?.status === 403) {
+        // Если токен недействителен, перенаправляем на страницу логина
+        localStorage.removeItem('authToken');
+        setIsAuthenticated(false);
+        navigate('/');
+      }
     }
   };
 
@@ -104,6 +126,9 @@ const Upload: React.FC = () => {
             Clear Selection
           </Button>
         </Box>
+
+        {/* Отображение ошибки */}
+        {error && <Box mt={2} color="error.main">{error}</Box>}
       </Container>
     </>
   );
