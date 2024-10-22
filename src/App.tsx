@@ -50,7 +50,7 @@ const App: React.FC = () => {
           path="/chat"
           element={
             <ProtectedRoute isAuthenticated={isAuthenticated}>
-              <Chat />
+              <Chat setIsAuthenticated={setIsAuthenticated} />
             </ProtectedRoute>
           }
         />

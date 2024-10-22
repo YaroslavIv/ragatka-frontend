@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { TextField, Container, ListItem, ListItemText, Box, Typography, Drawer, List, ListItemButton, IconButton, InputAdornment } from '@mui/material';
-import { Send as SendIcon, Menu as MenuIcon, Chat as ChatIcon } from '@mui/icons-material';
+import { TextField, Container, ListItem, ListItemText, Box, Typography, Drawer, List, ListItemButton, IconButton, InputAdornment, Button } from '@mui/material';
+import { Send as SendIcon, Menu as MenuIcon, Chat as ChatIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import Navbar from '../components/Navbar';
 import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import { Scrollbars } from 'react-custom-scrollbars-2';
+import axios, { AxiosError } from 'axios'; // Импортируем AxiosError для работы с ошибками
 
 interface Message {
   text: string;
@@ -21,15 +22,61 @@ const socket = io('http://localhost:4000', {
 const drawerWidth = 240;
 const collapsedDrawerWidth = 70;
 
-const Chat: React.FC = () => {
+interface AccountProps {
+  setIsAuthenticated: (authStatus: boolean) => void;
+}
+
+const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
   const [message, setMessage] = useState(''); // Текущее сообщение
   const [messages, setMessages] = useState<Message[]>([]); // История сообщений
   const [selectedChat, setSelectedChat] = useState<string | null>('General'); // Текущий выбранный чат
-  const [chatList, setChatList] = useState<string[]>(['General', 'Work', 'Hobbies']); // Пример списка чатов
+  const [chatList, setChatList] = useState<string[]>(['General', 'Work']); // Пример списка чатов
   const [error, setError] = useState<string | null>(null); // Для обработки ошибок
   const [drawerOpen, setDrawerOpen] = useState(true); // Управление состоянием боковой панели
   const navigate = useNavigate();
   const chatEndRef = useRef<HTMLDivElement | null>(null); // Для прокрутки к последнему сообщению
+  const [userName, setUserName] = useState<string>(''); // Имя пользователя
+  const [loading, setLoading] = useState<boolean>(true); // Для отображения статуса загрузки
+  const [newChatName, setNewChatName] = useState<string>(''); // Для создания нового чата
+
+
+
+  useEffect(() => {
+    // Запрос данных пользователя с сервера
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('authToken'); // Получаем токен из localStorage
+      if (!token) {
+        setError('Token is missing, please log in.');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const response = await axios.get('http://localhost:5000/api/user', {
+          headers: {
+            Authorization: `Bearer ${token}`, // Передаем токен в заголовке
+          },
+        });
+
+        const { userName, _ } = response.data;
+        setUserName(userName); // Сохраняем имя пользователя
+        setLoading(false); // Останавливаем индикатор загрузки
+      } catch (err) {
+        const axiosError = err as AxiosError; // Приведение типа err к AxiosError
+        console.error('Ошибка при загрузке данных пользователя:', axiosError);
+        setError('Ошибка при получении данных пользователя.');
+        setLoading(false);
+        if (axiosError.response?.status === 403) {
+          // Если токен недействителен, перенаправляем на страницу логина
+          localStorage.removeItem('authToken');
+          setIsAuthenticated(false);
+          navigate('/');
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [navigate, setIsAuthenticated]);
 
   useEffect(() => {
     socket.on('connect', () => {
@@ -83,8 +130,26 @@ const Chat: React.FC = () => {
       handleSend();
     }
   };
-  
-  
+
+  // Создание нового чата
+  const handleCreateChat = () => {
+    if (newChatName.trim() && !chatList.includes(newChatName)) {
+      setChatList([...chatList, newChatName]);
+      setNewChatName(''); // Очищаем поле после создания
+    }
+  };
+
+  // Удаление чата
+  const handleDeleteChat = (chatName: string) => {
+    if (chatName !== 'General') {
+      setChatList(chatList.filter((chat) => chat !== chatName));
+      if (selectedChat === chatName) {
+        setSelectedChat('General'); // Переключаем на чат "General", если текущий был удалён
+      }
+    } else {
+      alert('You cannot delete the "General" chat.');
+    }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Enter') {
@@ -118,16 +183,25 @@ const Chat: React.FC = () => {
               width: drawerOpen ? drawerWidth : collapsedDrawerWidth,
               boxSizing: 'border-box',
               top: '64px',
-              transition: 'width 0.3s',
+              transition: 'width 0.3s ease-in-out',
+              background: 'linear-gradient(135deg, #1976d2, #4fc3f7)',
+              color: '#fff',
             },
           }}
         >
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px' }}>
-            <IconButton onClick={toggleDrawer}>
+          {/* Заголовок и аватар */}
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px' }}>
+            {drawerOpen && <Typography variant="body2">{userName}</Typography>}
+          </Box>
+
+          {/* Кнопка открытия/закрытия */}
+          <Box sx={{ display: 'flex', justifyContent: 'center', padding: '10px' }}>
+            <IconButton onClick={toggleDrawer} sx={{ color: '#fff' }}>
               <MenuIcon />
             </IconButton>
           </Box>
 
+          {/* Список чатов */}
           <List>
             {chatList.map((chatName) => (
               <ListItemButton
@@ -137,13 +211,65 @@ const Chat: React.FC = () => {
                 sx={{
                   justifyContent: drawerOpen ? 'initial' : 'center',
                   paddingLeft: drawerOpen ? '20px' : '8px',
+                  '&:hover': { backgroundColor: '#115293' },
                 }}
               >
-                <ChatIcon sx={{ marginRight: drawerOpen ? '10px' : '0' }} />
-                {drawerOpen && <ListItemText primary={chatName} />}
+                <ChatIcon sx={{ marginRight: drawerOpen ? '10px' : '0', color: '#fff' }} />
+                {drawerOpen && (
+                  <ListItemText
+                    primary={chatName}
+                    sx={{
+                      '& .MuiListItemText-primary': {
+                        fontWeight: selectedChat === chatName ? 'bold' : 'normal',
+                        color: '#fff',
+                      },
+                    }}
+                  />
+                )}
+                {drawerOpen && (
+                <IconButton onClick={() => handleDeleteChat(chatName)} sx={{ color: '#fff' }}>
+                  <DeleteIcon />
+                </IconButton>
+                )}
               </ListItemButton>
             ))}
           </List>
+
+          {/* Добавление нового чата */}
+          {drawerOpen && (
+          <Box sx={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <TextField
+            label="New Chat"
+            value={newChatName}
+            onChange={(e) => setNewChatName(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleCreateChat(); // Создаем чат по нажатию Enter
+              }
+            }}
+            fullWidth
+            variant="outlined"
+            sx={{
+              marginBottom: '10px',
+              backgroundColor: '#e0e0e0', // Темнее фон
+              '& .MuiOutlinedInput-root': {
+                '& fieldset': {
+                  border: 'none', // Убираем рамку
+                },
+              },
+            }}
+            InputLabelProps={{
+              style: {
+                display: 'none', // Убираем label внутри поля ввода
+              },
+            }}
+          />
+          <Button onClick={handleCreateChat} variant="contained" sx={{ backgroundColor: '#1976d2', color: '#fff' }}>
+            Create Chat
+          </Button>
+        </Box>
+        
+          )}
         </Drawer>
 
         {/* Правая часть с чатом */}
@@ -234,7 +360,6 @@ const Chat: React.FC = () => {
               ))
             ) : (
               <Typography variant="h6" sx={{ textAlign: 'center', marginTop: '20px' }}>
-                No messages in {selectedChat} yet.
               </Typography>
             )}
             <div ref={chatEndRef} />
