@@ -6,6 +6,7 @@ import io from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
 import { Scrollbars } from 'react-custom-scrollbars-2';
 import axios, { AxiosError } from 'axios'; // Импортируем AxiosError для работы с ошибками
+import { useTheme } from '@mui/material/styles';
 
 interface Message {
   text: string;
@@ -24,9 +25,11 @@ const collapsedDrawerWidth = 70;
 
 interface AccountProps {
   setIsAuthenticated: (authStatus: boolean) => void;
+  isDarkMode: boolean;
+  setIsDarkMode: (value: boolean) => void;
 }
 
-const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
+const Chat: React.FC<AccountProps> = ({ setIsAuthenticated, isDarkMode, setIsDarkMode }) => {
   const [message, setMessage] = useState(''); // Текущее сообщение
   const [messages, setMessages] = useState<Message[]>([]); // История сообщений
   const [selectedChat, setSelectedChat] = useState<string | null>('General'); // Текущий выбранный чат
@@ -38,6 +41,7 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
   const [userName, setUserName] = useState<string>(''); // Имя пользователя
   const [loading, setLoading] = useState<boolean>(true); // Для отображения статуса загрузки
   const [newChatName, setNewChatName] = useState<string>(''); // Для создания нового чата
+  const theme = useTheme();
 
 
 
@@ -170,7 +174,11 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
   return (
     <>
       {/* Navbar всегда отображается вверху */}
-      <Navbar title="Chat" setIsAuthenticated={() => {}} />
+      <Navbar title="Chat" 
+        setIsAuthenticated={() => {}}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+      />
 
       <Box sx={{ display: 'flex', height: '100vh' }}>
         {/* Левая боковая панель */}
@@ -185,7 +193,7 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
               top: '64px',
               transition: 'width 0.3s ease-in-out',
               background: 'linear-gradient(135deg, #1976d2, #4fc3f7)',
-              color: '#fff',
+              color: theme.palette.background.paper,
             },
           }}
         >
@@ -196,7 +204,7 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
 
           {/* Кнопка открытия/закрытия */}
           <Box sx={{ display: 'flex', justifyContent: 'center', padding: '10px' }}>
-            <IconButton onClick={toggleDrawer} sx={{ color: '#fff' }}>
+            <IconButton onClick={toggleDrawer} sx={{ color: theme.palette.background.paper }}>
               <MenuIcon />
             </IconButton>
           </Box>
@@ -214,20 +222,20 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
                   '&:hover': { backgroundColor: '#115293' },
                 }}
               >
-                <ChatIcon sx={{ marginRight: drawerOpen ? '10px' : '0', color: '#fff' }} />
+                <ChatIcon sx={{ marginRight: drawerOpen ? '10px' : '0', color: theme.palette.background.paper }} />
                 {drawerOpen && (
                   <ListItemText
                     primary={chatName}
                     sx={{
                       '& .MuiListItemText-primary': {
                         fontWeight: selectedChat === chatName ? 'bold' : 'normal',
-                        color: '#fff',
+                        color: theme.palette.background.paper,
                       },
                     }}
                   />
                 )}
                 {drawerOpen && (
-                <IconButton onClick={() => handleDeleteChat(chatName)} sx={{ color: '#fff' }}>
+                <IconButton onClick={() => handleDeleteChat(chatName)} sx={{ color: theme.palette.background.paper }}>
                   <DeleteIcon />
                 </IconButton>
                 )}
@@ -251,7 +259,7 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
             variant="outlined"
             sx={{
               marginBottom: '10px',
-              backgroundColor: '#e0e0e0', // Темнее фон
+              backgroundColor: theme.palette.background.paper, // Темнее фон
               '& .MuiOutlinedInput-root': {
                 '& fieldset': {
                   border: 'none', // Убираем рамку
@@ -264,7 +272,7 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
               },
             }}
           />
-          <Button onClick={handleCreateChat} variant="contained" sx={{ backgroundColor: '#1976d2', color: '#fff' }}>
+          <Button onClick={handleCreateChat} variant="contained" sx={{ backgroundColor: '#1976d2', color: theme.palette.background.paper }}>
             Create Chat
           </Button>
         </Box>
@@ -279,7 +287,7 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
             display: 'flex',
             flexDirection: 'column',
             flexGrow: 1,
-            backgroundColor: '#ffffff',
+            backgroundColor: theme.palette.background.paper,
             paddingTop: '80px',
             paddingLeft: '20px',
             paddingRight: '20px',
@@ -345,8 +353,8 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
                 >
                   <Box
                     sx={{
-                      backgroundColor: msg.sender === 'client' ? '#1976d2' : '#e0e0e0',
-                      color: msg.sender === 'client' ? '#fff' : '#000',
+                      backgroundColor: msg.sender === 'client' ? theme.palette.background.client : theme.palette.background.server,
+                      color: msg.sender === 'client' ? theme.palette.text.client : theme.palette.text.server,
                       borderRadius: '10px',
                       padding: '10px 15px',
                       maxWidth: '60%',
@@ -373,7 +381,7 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
               position: 'sticky',
               bottom: 0,
               width: '60%',
-              backgroundColor: '#ffffff',
+              backgroundColor: theme.palette.background.paper,
               margin: '0 auto',
               display: 'flex',
               alignItems: 'center',
@@ -389,12 +397,14 @@ const Chat: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
               onKeyDown={handleKeyDown} // Обработчик клавиш
               sx={{
                 marginBottom: '10px',
-                backgroundColor: '#e0e0e0', // Темнее фон
+                backgroundColor: theme.palette.background.paper, // Темнее фон
+                color: theme.palette.text.primary,
                 borderRadius: '20px', // Закругленные углы
                 padding: '5px 10px',
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
-                    border: 'none', // Убираем рамку
+                    border: `2px solid ${theme.palette.text.primary}`, // Убираем рамку
+                    borderRadius: '20px'
                   },
                 },
               }}

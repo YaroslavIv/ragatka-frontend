@@ -6,9 +6,11 @@ import { useNavigate } from 'react-router-dom';
 
 interface AccountProps {
   setIsAuthenticated: (authStatus: boolean) => void;
+  isDarkMode: boolean;
+  setIsDarkMode: (value: boolean) => void;
 }
 
-const Account: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
+const Account: React.FC<AccountProps> = ({ setIsAuthenticated, isDarkMode, setIsDarkMode }) => {
   const [userEmail, setUserEmail] = useState<string>(''); // Email пользователя
   const [userName, setUserName] = useState<string>(''); // Имя пользователя
   const [loading, setLoading] = useState<boolean>(true); // Для отображения статуса загрузки
@@ -61,7 +63,11 @@ const Account: React.FC<AccountProps> = ({ setIsAuthenticated }) => {
 
   return (
     <>
-      <Navbar title="Account" setIsAuthenticated={setIsAuthenticated} />
+      <Navbar title="Account" 
+        setIsAuthenticated={setIsAuthenticated}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+      />
       <Container maxWidth="sm">
         <Box
           sx={{

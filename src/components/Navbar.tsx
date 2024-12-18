@@ -1,5 +1,5 @@
 import React from 'react';
-import { AppBar, Toolbar, Typography, Button, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, IconButton, Switch } from '@mui/material';
 import { Link, useNavigate } from 'react-router-dom';
 import ExitToAppIcon from '@mui/icons-material/ExitToApp';
 import CloudUploadIcon from '@mui/icons-material/CloudUpload';
@@ -9,9 +9,11 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle'; // Иконк
 interface NavbarProps {
   title: string;
   setIsAuthenticated: (authStatus: boolean) => void;
+  isDarkMode: boolean;
+  setIsDarkMode: (value: boolean) => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ title, setIsAuthenticated }) => {
+const Navbar: React.FC<NavbarProps> = ({ title, setIsAuthenticated, isDarkMode, setIsDarkMode }) => {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -35,6 +37,11 @@ const Navbar: React.FC<NavbarProps> = ({ title, setIsAuthenticated }) => {
         <Button color="inherit" startIcon={<AccountCircleIcon />} component={Link} to="/account">
           Account
         </Button>
+        <Switch
+          checked={isDarkMode}
+          onChange={(e) => setIsDarkMode(e.target.checked)}
+          color="default"
+        />
         <IconButton color="inherit" onClick={handleLogout}>
           <ExitToAppIcon />
         </IconButton>

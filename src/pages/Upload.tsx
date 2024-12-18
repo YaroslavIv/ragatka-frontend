@@ -5,7 +5,12 @@ import axios, { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar'; // Импортируем Navbar
 
-const Upload: React.FC = () => {
+interface UploadProps {
+  isDarkMode: boolean;
+  setIsDarkMode: (value: boolean) => void;
+}
+
+const Upload: React.FC<UploadProps> = ({isDarkMode, setIsDarkMode}) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null); // Для обработки ошибок
@@ -68,7 +73,11 @@ const Upload: React.FC = () => {
 
   return (
     <>
-      <Navbar title="Upload" setIsAuthenticated={setIsAuthenticated} />
+      <Navbar title="Upload" 
+        setIsAuthenticated={setIsAuthenticated}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
+      />
 
       <Container maxWidth="sm" style={{ paddingTop: '100px' }}>
         {/* Drag-and-Drop зона */}
